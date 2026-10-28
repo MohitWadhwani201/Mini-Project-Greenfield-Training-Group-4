@@ -1,0 +1,50 @@
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Python generated files
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Generated data (keep the raw IBM dataset in data/raw/ tracked)
+data/processed/
+data/synthesized/
+data/output/
+*.parquet
+
+# Database dumps and local DB files
+*.sql.bak
+*.dump
+*.sqlite
+*.db
+!sql/*.sql
+
+# Logs
+*.log
+logs/
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
