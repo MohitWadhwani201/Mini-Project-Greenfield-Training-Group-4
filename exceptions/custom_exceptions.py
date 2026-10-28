@@ -23,3 +23,9 @@ class ValidationError(AppError):
 
 class DuplicateEntityError(AppError):
     """Unique constraint violated (e.g. duplicate email)."""
+
+class WarehouseSyncError(DatabaseOperationError):
+    """OLTP change was saved, but the OLAP/ETL step failed.
+
+    The ETL procedures are idempotent, so the next ETL run will reconcile it.
+    """

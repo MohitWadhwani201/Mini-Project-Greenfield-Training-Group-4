@@ -1,5 +1,6 @@
 """Thread-safe Singleton DatabaseConnection with per-database connection pools."""
 import threading
+import re
 from contextlib import contextmanager
 from typing import Any, Iterator, Optional, Sequence
 
@@ -136,3 +137,35 @@ class DatabaseConnection:
         with self.transaction(database) as cur:
             cur.executemany(query, seq_params)
             return cur.rowcount
+
+    def call_procedure(
+    self, 
+    name: str, 
+    args: Sequence = (),
+    database: Optional[str] = None
+    ) -> list[list[dict]]:
+        """CALL a stored procedure; returns any result sets it produced.
+
+        NOTE: the ETL procedures issue their own START TRANSACTION / COMMIT, which
+        implicitly commits anything pending on that connection. Always call them
+        on their own connection (this method does), never inside transaction().
+        """
+        if not re.fullmatch(r"[A-Za-z0-9_]+", name):
+            raise DatabaseOperationError(f"Illegal procedure name: {name!r}")
+        
+        conn = self.get_connection(database)
+        try:
+            cur = conn.cursor(dictionary=True)
+            cur.callproc(name, tuple(args))
+            results = [rs.fetchall() for rs in cur.stored_results()]
+            conn.commit()
+            cur.close()
+            return results
+        except mysql.connector.Error as exc:
+            try:
+                conn.rollback()
+            except mysql.connector.Error:
+                pass
+            raise self._translate(exc) from exc
+        finally:
+            conn.close()

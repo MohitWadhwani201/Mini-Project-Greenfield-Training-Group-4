@@ -3,17 +3,19 @@ from typing import Optional
 
 from . import validators as v
 
-VALID_STATUSES = ("Planned", "Active", "Completed", "On Hold")
+VALID_STATUSES = ("Active", "Planned", "Completed", "On Hold")
 
 
 class Project:
+    """Maps to OLTP Projects."""
+
     def __init__(self, project_name: str, start_date: date,
-                 end_date: Optional[date] = None, status: str = "Planned",
-                 project_id: Optional[int] = None):
+                 end_date: Optional[date] = None, budget: Optional[float] = None,
+                 status: str = "Active", project_id: Optional[int] = None):
         self._project_id = project_id
         self.project_name = project_name
-        self._start_date = start_date
         self.set_dates(start_date, end_date)
+        self.budget = budget
         self.status = status
 
     @property
@@ -34,6 +36,12 @@ class Project:
         self._start_date, self._end_date = start, end
 
     @property
+    def budget(self): return self._budget
+    @budget.setter
+    def budget(self, val):
+        self._budget = None if val is None else v.in_range(val, 0, 9_999_999_999, "budget")
+
+    @property
     def status(self): return self._status
     @status.setter
     def status(self, val):
@@ -44,9 +52,11 @@ class Project:
     def to_dict(self):
         return {"project_id": self._project_id, "project_name": self._name,
                 "start_date": self._start_date, "end_date": self._end_date,
-                "status": self._status}
+                "budget": self._budget, "status": self._status}
 
     @classmethod
     def from_row(cls, row: dict):
+        b = row.get("budget")
         return cls(row["project_name"], row["start_date"], row.get("end_date"),
-                   row.get("status", "Planned"), row.get("project_id"))
+                   None if b is None else float(b), row.get("status") or "Active",
+                   row.get("project_id"))
