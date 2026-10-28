@@ -107,8 +107,9 @@ class DatabaseConnection:
             conn.close()   # returns connection to the pool
 
     def fetch_all(self, query: str, params: Optional[Sequence] = None,
-                  database: Optional[str] = None) -> list[dict]:
-        conn = self.get_connection(database)
+                  database: Optional[str] = None, olap: Optional[bool] = None) -> list[dict]:
+        target_db = (self.olap_name if olap else self.oltp_name) if olap is not None else database
+        conn = self.get_connection(target_db)
         try:
             cur = conn.cursor(dictionary=True)
             cur.execute(query, params or ())
@@ -121,8 +122,8 @@ class DatabaseConnection:
             conn.close()
 
     def fetch_one(self, query: str, params: Optional[Sequence] = None,
-                  database: Optional[str] = None) -> Optional[dict]:
-        rows = self.fetch_all(query, params, database)
+                  database: Optional[str] = None, olap: Optional[bool] = None) -> Optional[dict]:
+        rows = self.fetch_all(query, params, database, olap=olap)
         return rows[0] if rows else None
 
     def execute_query(self, query: str, params: Optional[Sequence] = None,

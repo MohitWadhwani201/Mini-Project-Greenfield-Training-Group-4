@@ -59,7 +59,7 @@ class DALClient:
             self._analytics_mgr = AnalyticsManager(self._db)
             self._etl_mgr = ETLManager(self._db)
             # Test ping
-            self._db.fetch_one("SELECT 1 AS ping", olap=False)
+            self._db.fetch_one("SELECT 1 AS ping")
             self.is_connected = True
             self.connection_error = None
         except Exception as e:
