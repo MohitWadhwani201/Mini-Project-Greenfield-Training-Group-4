@@ -110,7 +110,8 @@ BEGIN
         performance_rating, job_satisfaction, environment_satisfaction, work_life_balance
     )
     WITH ReviewWithProject AS (
-    -- Link the employee to the most recent project they were working on at the time of the review.        SELECT
+        -- Link the employee to the most recent project they were working on at the time of the review.
+        SELECT
             r.review_id, r.employee_id, r.review_date,
             r.performance_rating, r.job_satisfaction, r.environment_satisfaction, r.work_life_balance,
             e.department_id,
