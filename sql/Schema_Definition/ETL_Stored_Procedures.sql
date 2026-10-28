@@ -1,7 +1,7 @@
 USE GreenFieldMiniProject_OLAP;
 
--- Run order: Populate_Dim_Date -> ETL_Load_Simple_Dimensions -> ETL_Dim_Employee_SCD2 -> ETL_Fact_PerformanceReviews
--- Run the whole ETL once per day (SCD2 closes versions at "yesterday" and opens new ones "today").
+-- The daily data load must run in this exact order: Dates, Simple Dimensions, Employee History, and finally Performance Reviews.
+-- Each daily run automatically retires outdated employee records as of yesterday and activates the updated records for today.
 
 DELIMITER //
 
@@ -66,9 +66,9 @@ CREATE PROCEDURE ETL_Dim_Employee_SCD2()
 BEGIN
     START TRANSACTION;
 
-    -- STEP A: Close the current version if role or salary changed.
-    -- "<=>" is a NULL-safe comparison, so NULL -> value changes are detected too.
-    -- end_date = yesterday, so the new version (starting today) never overlaps it.
+    -- STEP A: Retire the active employee record if their job role or salary changes.
+    -- This safely detects all updates, even if a previously empty field is filled in.
+    -- The old record is closed out as of yesterday to prevent any timeline overlap with the new version starting today.
     UPDATE GreenFieldMiniProject_OLAP.Dim_Employee de
     JOIN GreenFieldMiniProject_OLTP.Employees e ON de.employee_id = e.employee_id
     SET
@@ -77,9 +77,9 @@ BEGIN
     WHERE de.is_current = TRUE
       AND (NOT (de.job_role <=> e.job_role) OR NOT (de.monthly_income <=> e.monthly_income));
 
-    -- STEP B: Insert a new current version for new hires and for employees closed in step A.
-    -- An employee's very first version starts on hire_date (so old reviews can be matched);
-    -- later versions start today.
+    -- STEP B: Create a new active record for brand-new hires, as well as for the employees whose records were just retired in Step A.
+    -- A new hire's very first record begins on their actual hire date so we can properly link their historical data, 
+    -- while any subsequent updates for existing employees will always start today.
     INSERT INTO GreenFieldMiniProject_OLAP.Dim_Employee (
         employee_id, first_name, last_name, job_role, monthly_income, age, gender, start_date, end_date, is_current
     )
@@ -110,8 +110,7 @@ BEGIN
         performance_rating, job_satisfaction, environment_satisfaction, work_life_balance
     )
     WITH ReviewWithProject AS (
-        -- Attach the project the employee was most recently assigned to ON OR BEFORE the review date
-        SELECT
+    -- Link the employee to the most recent project they were working on at the time of the review.        SELECT
             r.review_id, r.employee_id, r.review_date,
             r.performance_rating, r.job_satisfaction, r.environment_satisfaction, r.work_life_balance,
             e.department_id,
@@ -148,13 +147,14 @@ BEGIN
         cr.work_life_balance
     FROM CleanedReviews cr
     -- Point-in-time join: the employee version that was valid ON the review date
+    -- Link the review to the exact version of the employee's profile that was active on the day the review took place.
     JOIN GreenFieldMiniProject_OLAP.Dim_Employee de
         ON cr.employee_id = de.employee_id
        AND cr.review_date BETWEEN de.start_date AND COALESCE(de.end_date, '9999-12-31')
     LEFT JOIN GreenFieldMiniProject_OLAP.Dim_Department dd ON cr.department_id = dd.department_id
     LEFT JOIN GreenFieldMiniProject_OLAP.Dim_Project dp ON cr.project_id = dp.project_id
     WHERE cr.rn_dup = 1
-      AND NOT EXISTS (   -- makes the load re-runnable: already loaded reviews are skipped
+      AND NOT EXISTS (   -- This ensures the data load can be safely run multiple times by skipping any reviews that have already been processed.
           SELECT 1 FROM GreenFieldMiniProject_OLAP.Fact_PerformanceReviews f WHERE f.review_id = cr.review_id
       );
 END //
