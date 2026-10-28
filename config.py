@@ -54,7 +54,7 @@ def load_settings() -> DBSettings:
         port=int(os.getenv("DB_PORT", "3306")),
         user=os.getenv("DB_USER", "root"),
         password=os.getenv("DB_PASSWORD", ""),
-        staging_db=os.getenv("DB_NAME", "greenfield_staging"),
+        staging_db=os.getenv("STAGING_DB_NAME", os.getenv("DB_NAME", "GreenFieldMiniProject_STG")),
         oltp_db=os.getenv("OLTP_DB_NAME", "GreenFieldMiniProject_OLTP"),
         olap_db=os.getenv("OLAP_DB_NAME", "GreenFieldMiniProject_OLAP"),
         pool_size=int(os.getenv("DB_POOL_SIZE", "5")),
@@ -62,6 +62,21 @@ def load_settings() -> DBSettings:
 
 # Load typed settings
 db_settings = load_settings()
+
+# Module 2 pipeline & database settings
+STAGING_DB = db_settings.staging_db
+OLTP_DB = db_settings.oltp_db
+OLAP_DB = db_settings.olap_db
+RUN_WAREHOUSE_ETL = os.getenv("RUN_WAREHOUSE_ETL", "true").lower() == "true"
+
+# Schema creation scripts in dependency order
+SCHEMA_SCRIPTS = [
+    BASE_DIR / "sql" / "staging_schema.sql",
+    BASE_DIR / "sql" / "Schema_Definition" / "OLTP_Schema_DDL.sql",
+    BASE_DIR / "sql" / "Schema_Definition" / "OLAP_Schema_DDL.sql",
+    BASE_DIR / "sql" / "staging_to_warehouse.sql",
+    BASE_DIR / "sql" / "Schema_Definition" / "ETL_Stored_Procedures.sql",
+]
 
 # Backward compatibility dict for Module 2 scripts expecting `DB_CONFIG`
 DB_CONFIG = {
