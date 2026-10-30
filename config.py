@@ -1,42 +1,29 @@
-"""Central configuration. Values come from environment variables / .env."""
+
 import os
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-# Optional dotenv loading (Streamlit Cloud, for instance, uses its own secrets management)
 try:
     from dotenv import load_dotenv
     load_dotenv()  # reads DB credentials from the .env file
 except ImportError:
     pass
 
-# ==========================================
-# Paths & File Settings
-# ==========================================
 BASE_DIR = Path(__file__).resolve().parent
 RAW_IBM_CSV = BASE_DIR / "data" / "raw" / "WA_Fn-UseC_-HR-Employee-Attrition.csv"
 OUTPUT_DIR = BASE_DIR / "data" / "synthesized"
 STAGING_SCHEMA_SQL = BASE_DIR / "sql" / "staging_schema.sql"
 
-# ==========================================
-# Synthesis Settings
-# ==========================================
-TARGET_ROWS = 100000                  # number of employees to generate
-SCD2_CHANGE_FRACTION = 0.25           # share of employees that get history changes
-RANDOM_SEED = 42                      # same seed gives the same data every run
-REFERENCE_DATE = str(date.today())    # "today" used for hire/termination dates
-FAKER_LOCALE = "en_IN"                # Indian names and cities
+TARGET_ROWS = 100000                  
+SCD2_CHANGE_FRACTION = 0.25          
+RANDOM_SEED = 42                     
+REFERENCE_DATE = str(date.today())    
+FAKER_LOCALE = "en_IN"                
 
-# ==========================================
-# Loader Settings
-# ==========================================
-CHUNK_SIZE = 5000                     # rows inserted per batch
-CREATE_SCHEMA = True                  # True = drop and recreate stg_ tables, False = only empty them
+CHUNK_SIZE = 5000                     
+CREATE_SCHEMA = True                  
 
-# ==========================================
-# Database Configuration
-# ==========================================
 @dataclass(frozen=True)
 class DBSettings:
     host: str
@@ -87,9 +74,6 @@ DB_CONFIG = {
     "database": db_settings.staging_db,
 }
 
-# ==========================================
-# Table & Schema Mapping
-# ==========================================
 # Logical name -> staging table name
 TABLE_MAP = {
     "dim_date": "stg_dim_date",
