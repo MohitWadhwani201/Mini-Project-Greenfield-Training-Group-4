@@ -1,9 +1,9 @@
 [theme]
 base = "dark"
-primaryColor = "#38BDF8"
-backgroundColor = "#0A0E17"
-secondaryBackgroundColor = "#111827"
-textColor = "#F1F5F9"
+primaryColor = "#3B82F6"
+backgroundColor = "#090D16"
+secondaryBackgroundColor = "#0B0F19"
+textColor = "#F3F4F6"
 font = "sans serif"
 
 [server]
@@ -11,3 +11,6 @@ headless = true
 enableCORS = false
 enableXsrfProtection = true
 
+[client]
+toolbarMode = "minimal"
+showErrorDetails = false

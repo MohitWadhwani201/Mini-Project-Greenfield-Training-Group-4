@@ -1,133 +1,142 @@
+"""
+Enterprise SaaS Data Visualizations (Linear / Datadog Aesthetic).
+Implements transparent Plotly charts with muted palette and #374151 gridlines.
+"""
 from typing import List, Dict, Any, Optional
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
 
-# Plotly Dark Theme Preset
-THEME_FONT = "Plus Jakarta Sans, -apple-system, sans-serif"
-COLOR_PRIMARY = "#38BDF8"       # Sky Blue
-COLOR_SECONDARY = "#818CF8"     # Soft Indigo
-COLOR_EMERALD = "#10B981"       # Mint / Success
-COLOR_AMBER = "#F59E0B"         # Amber / Warning
-COLOR_ROSE = "#F43F5E"          # Rose / Danger
-COLOR_PURPLE = "#A855F7"        # Violet
-COLOR_TEXT = "#F8FAFC"
-COLOR_MUTED = "#94A3B8"
-COLOR_GRID = "rgba(255, 255, 255, 0.07)"
+FONT_FAMILY = "Inter, -apple-system, sans-serif"
+COLOR_PRIMARY = "#3B82F6"
+COLOR_EMERALD = "#10B981"
+COLOR_AMBER = "#F59E0B"
+COLOR_ROSE = "#EF4444"
+COLOR_SLATE = "#6B7280"
+COLOR_PURPLE = "#8B5CF6"
+COLOR_TEXT = "#F9FAFB"
+COLOR_MUTED = "#9CA3AF"
+COLOR_GRID = "#374151"
 
 
-def _apply_dark_layout(fig: go.Figure, title: str = "", height: int = 400) -> go.Figure:
+def _apply_saas_layout(fig: go.Figure, title: str = "", height: int = 380) -> go.Figure:
     fig.update_layout(
         title=dict(
             text=f"<b>{title}</b>" if title else "",
-            font=dict(family=THEME_FONT, size=15, color=COLOR_TEXT),
-            x=0.01,
-            y=0.96,
+            font=dict(family=FONT_FAMILY, size=13, color=COLOR_TEXT),
+            x=0.0,
+            y=0.97,
         ),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         height=height,
-        font=dict(family=THEME_FONT, color=COLOR_MUTED, size=12),
-        margin=dict(l=40, r=30, t=50, b=40),
+        font=dict(family=FONT_FAMILY, color=COLOR_MUTED, size=11),
+        margin=dict(l=45, r=35, t=55, b=35),  # Extra top margin clears toolbars
         legend=dict(
             orientation="h",
             yanchor="bottom",
             y=1.02,
-            xanchor="right",
-            x=1,
-            font=dict(family=THEME_FONT, size=11, color=COLOR_MUTED),
-            bgcolor="rgba(15, 23, 42, 0.6)",
-            bordercolor="rgba(255,255,255,0.08)",
-            borderwidth=1,
+            xanchor="left",
+            x=0.0,
+            font=dict(family=FONT_FAMILY, size=11, color=COLOR_MUTED),
+            bgcolor="rgba(0,0,0,0)",
+            borderwidth=0,
         ),
         hoverlabel=dict(
-            bgcolor="#1E293B",
-            font_size=12,
-            font_family=THEME_FONT,
+            bgcolor="#111827",
+            font_size=11,
+            font_family=FONT_FAMILY,
             font_color=COLOR_TEXT,
-            bordercolor=COLOR_PRIMARY,
+            bordercolor="#374151",
         ),
     )
     fig.update_xaxes(
         showgrid=True,
         gridcolor=COLOR_GRID,
+        gridwidth=1,
         zeroline=False,
-        tickfont=dict(family=THEME_FONT, color=COLOR_MUTED, size=11),
+        tickfont=dict(family=FONT_FAMILY, color=COLOR_MUTED, size=10),
     )
     fig.update_yaxes(
         showgrid=True,
         gridcolor=COLOR_GRID,
+        gridwidth=1,
         zeroline=False,
-        tickfont=dict(family=THEME_FONT, color=COLOR_MUTED, size=11),
+        tickfont=dict(family=FONT_FAMILY, color=COLOR_MUTED, size=10),
     )
     return fig
 
 
+def _parse_numeric(val: Any) -> float:
+    if pd.isna(val) or val is None:
+        return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+    if isinstance(val, str):
+        val = val.replace('%', '').replace(',', '').strip()
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return 0.0
+
+
 def create_yoy_performance_chart(data: List[Dict[str, Any]]) -> go.Figure:
-    """
-    Renders YoY Performance Trend with LAG() delta markers and auxiliary satisfaction scores.
-    """
     df = pd.DataFrame(data)
     fig = go.Figure()
 
     if df.empty:
-        return _apply_dark_layout(fig, "No Performance History Found")
+        return _apply_saas_layout(fig, "No Performance History")
 
-    # Primary Line: Avg Performance Rating
+    df["avg_performance"] = df["avg_performance"].apply(_parse_numeric)
+
     fig.add_trace(
         go.Scatter(
             x=df["review_year"],
             y=df["avg_performance"],
             mode="lines+markers",
-            name="Avg Performance",
-            line=dict(color=COLOR_PRIMARY, width=3.5),
-            marker=dict(size=9, color=COLOR_PRIMARY, line=dict(color="#0A0E17", width=2)),
-            hovertemplate="<b>Year %{x}</b><br>Avg Rating: %{y:.2f}<extra></extra>",
+            name="Performance Rating",
+            line=dict(color=COLOR_PRIMARY, width=2.5),
+            marker=dict(size=7, color=COLOR_PRIMARY),
+            hovertemplate="Year %{x}<br>Rating: <b>%{y:.2f}</b><extra></extra>",
         )
     )
 
-    # Secondary Trace: Job Satisfaction
     if "avg_job_satisfaction" in df.columns:
+        df["avg_job_satisfaction"] = df["avg_job_satisfaction"].apply(_parse_numeric)
         fig.add_trace(
             go.Scatter(
                 x=df["review_year"],
                 y=df["avg_job_satisfaction"],
-                mode="lines+markers",
+                mode="lines",
                 name="Job Satisfaction",
-                line=dict(color=COLOR_EMERALD, width=2, dash="dash"),
-                marker=dict(size=7, color=COLOR_EMERALD),
-                hovertemplate="Job Satisfaction: %{y:.2f}<extra></extra>",
+                line=dict(color=COLOR_EMERALD, width=1.5, dash="dash"),
+                hovertemplate="Job Satisfaction: <b>%{y:.2f}</b><extra></extra>",
             )
         )
 
-    # Tertiary Trace: Work-Life Balance
     if "avg_work_life_balance" in df.columns:
+        df["avg_work_life_balance"] = df["avg_work_life_balance"].apply(_parse_numeric)
         fig.add_trace(
             go.Scatter(
                 x=df["review_year"],
                 y=df["avg_work_life_balance"],
-                mode="lines+markers",
+                mode="lines",
                 name="Work-Life Balance",
-                line=dict(color=COLOR_AMBER, width=2, dash="dot"),
-                marker=dict(size=7, color=COLOR_AMBER),
-                hovertemplate="Work-Life Balance: %{y:.2f}<extra></extra>",
+                line=dict(color=COLOR_AMBER, width=1.5, dash="dot"),
+                hovertemplate="Work-Life Balance: <b>%{y:.2f}</b><extra></extra>",
             )
         )
 
-    # YoY Change Bars on secondary y-axis if present
     if "yoy_change" in df.columns:
+        df["yoy_change"] = df["yoy_change"].apply(_parse_numeric)
+
         fig.add_trace(
             go.Bar(
                 x=df["review_year"],
-                y=df["yoy_change"].fillna(0),
-                name="YoY Delta (LAG)",
+                y=df["yoy_change"],
+                name="YoY Delta",
                 marker=dict(
-                    color = df["yoy_change"].apply(
-                        lambda v: (
-                            "rgba(16, 185, 129, 0.45)"
-                            if (v is not None and pd.notna(v) and v >= 0)
-                            else "rgba(244, 63, 94, 0.45)"
-                        )
+                    color=df["yoy_change"].apply(
+                        lambda v: "rgba(16, 185, 129, 0.4)" if v >= 0 else "rgba(239, 68, 68, 0.4)"
                     ),
                     line=dict(
                         color = df["yoy_change"].apply(
@@ -136,94 +145,75 @@ def create_yoy_performance_chart(data: List[Dict[str, Any]]) -> go.Figure:
                     ),
                 ),
                 yaxis="y2",
-                hovertemplate="YoY Change: %{y:+.3f}<extra></extra>",
+                hovertemplate="YoY Change: <b>%{y:+.3f}</b><extra></extra>",
             )
         )
         fig.update_layout(
             yaxis2=dict(
-                title=dict(text="YoY Delta", font=dict(color=COLOR_MUTED, size=11)),
                 overlaying="y",
                 side="right",
                 showgrid=False,
                 zeroline=True,
                 zerolinecolor=COLOR_GRID,
-                tickfont=dict(color=COLOR_MUTED, size=10),
+                tickfont=dict(color=COLOR_MUTED, size=9),
             )
         )
 
-    fig.update_yaxes(title="Score (Scale 1.0 - 4.0)", range=[1.5, 4.2])
-    fig.update_xaxes(title="Review Year", dtick=1)
-    return _apply_dark_layout(fig, "Year-Over-Year Performance & Satisfaction Trajectory", height=430)
-
+    fig.update_yaxes(title="Score (1.0 - 4.0)", range=[1.5, 4.2])
+    fig.update_xaxes(title="", dtick=1)
+    return _apply_saas_layout(fig, "Performance Trajectory & YoY Change (SQL LAG)", height=360)
 
 def create_leaderboard_chart(data: List[Dict[str, Any]], top_n: int = 5) -> go.Figure:
-    """
-    Ranked horizontal bar chart for top performers grouped by department.
-    """
     df = pd.DataFrame(data)
     fig = go.Figure()
 
     if df.empty:
-        return _apply_dark_layout(fig, "No Leaderboard Data Available")
+        return _apply_saas_layout(fig, "No Leaderboard Records")
 
-    df["full_name"] = df["first_name"] + " " + df["last_name"]
-    # Sort for bottom-up horizontal bar display
-    df_sorted = df.sort_values(by=["dept_rank", "avg_rating"], ascending=[False, True])
+    df["avg_rating"] = df["avg_rating"].apply(_parse_numeric)
+    df["review_count"] = df["review_count"].apply(_parse_numeric)
+    df["full_name"] = df["first_name"].astype(str) + " " + df["last_name"].astype(str)
 
-    # Rank badge mapping
-    rank_colors = []
-    for r in df_sorted["dept_rank"]:
-        if r == 1:
-            rank_colors.append("#F59E0B")  # Gold
-        elif r == 2:
-            rank_colors.append("#94A3B8")  # Silver
-        elif r == 3:
-            rank_colors.append("#B45309")  # Bronze
-        else:
-            rank_colors.append(COLOR_PRIMARY)
+    # Sort descending and truncate to top_n
+    df_sorted = df.sort_values(by=["avg_rating", "review_count"], ascending=[True, True]).tail(top_n)
 
     fig.add_trace(
         go.Bar(
-            y=[f"#{r} {name}" for r, name in zip(df_sorted["dept_rank"], df_sorted["full_name"])],
+            y=[f"{row['full_name']} ({row['department_name']})" for _, row in df_sorted.iterrows()],
             x=df_sorted["avg_rating"],
             orientation="h",
-            marker=dict(
-                color=rank_colors,
-                line=dict(color="rgba(255,255,255,0.15)", width=1),
-            ),
-            text=[f"<b>{score:.2f}</b> ★ ({cnt} reviews)" for score, cnt in zip(df_sorted["avg_rating"], df_sorted["review_count"])],
+            marker=dict(color=COLOR_AMBER, line=dict(color="#1F2937", width=1)),
+            text=[f"{score:.2f} ({int(cnt)} reviews)" for score, cnt in zip(df_sorted["avg_rating"], df_sorted["review_count"])],
             textposition="auto",
-            textfont=dict(color=COLOR_TEXT, size=11),
+            textfont=dict(color=COLOR_TEXT, size=10),
             customdata=df_sorted[["department_name", "review_count", "dept_rank"]],
             hovertemplate=(
                 "<b>%{y}</b><br>"
-                "Department: %{customdata[0]}<br>"
-                "Avg Rating: %{x:.2f} / 4.0<br>"
-                "Reviews Evaluated: %{customdata[1]}<br>"
-                "Department Rank: <b>#%{customdata[2]}</b>"
+                "Avg Rating: <b>%{x:.2f}</b><br>"
+                "Review Count: %{customdata[1]}<br>"
                 "<extra></extra>"
             ),
         )
     )
 
-    fig.update_xaxes(title="Average Performance Rating", range=[2.0, 4.15])
+    fig.update_xaxes(title="Average Rating", range=[2.0, 4.15])
     fig.update_yaxes(title="")
-    return _apply_dark_layout(fig, f"Top Performers Leaderboard (SQL DENSE_RANK)", height=max(380, len(df_sorted) * 35))
+    return _apply_saas_layout(fig, "Leaderboard (Top Performers)", height=max(320, len(df_sorted) * 36))
 
 
 def create_attrition_chart(data: List[Dict[str, Any]], group_by: str = "Department") -> go.Figure:
-    """
-    Renders Attrition Rate (%) comparison with flight-risk threshold.
-    """
     df = pd.DataFrame(data)
     fig = go.Figure()
 
-    if df.empty:
-        return _apply_dark_layout(fig, "No Attrition Data Available")
+    if df.empty or "attrition_rate_pct" not in df.columns:
+        return _apply_saas_layout(fig, "No Attrition Records")
+
+    df["attrition_rate_pct"] = df["attrition_rate_pct"].apply(_parse_numeric)
+    if "avg_monthly_income" in df.columns:
+        df["avg_monthly_income"] = df["avg_monthly_income"].apply(_parse_numeric)
 
     df_sorted = df.sort_values(by="attrition_rate_pct", ascending=True)
 
-    # Color scale by risk level
     bar_colors = [
         COLOR_ROSE if rate >= 20.0 else COLOR_AMBER if rate >= 12.0 else COLOR_EMERALD
         for rate in df_sorted["attrition_rate_pct"]
@@ -234,46 +224,56 @@ def create_attrition_chart(data: List[Dict[str, Any]], group_by: str = "Departme
             y=df_sorted["grp"],
             x=df_sorted["attrition_rate_pct"],
             orientation="h",
-            marker=dict(color=bar_colors, line=dict(color="rgba(255,255,255,0.15)", width=1)),
-            text=[f"<b>{rate:.1f}%</b> ({att}/{hc})" for rate, att, hc in zip(df_sorted["attrition_rate_pct"], df_sorted["attrited"], df_sorted["headcount"])],
+            marker=dict(color=bar_colors, line=dict(color="#1F2937", width=1)),
+            text=[
+                f"{rate:.1f}% ({int(_parse_numeric(att))}/{int(_parse_numeric(hc))})"
+                for rate, att, hc in zip(
+                    df_sorted["attrition_rate_pct"],
+                    df_sorted.get("attrited", [0]*len(df_sorted)),
+                    df_sorted.get("headcount", [0]*len(df_sorted))
+                )
+            ],
             textposition="auto",
-            textfont=dict(color=COLOR_TEXT, size=11),
+            textfont=dict(color=COLOR_TEXT, size=10),
             customdata=df_sorted[["headcount", "attrited", "avg_monthly_income"]],
             hovertemplate=(
                 "<b>%{y}</b><br>"
                 "Attrition Rate: <b>%{x:.2f}%</b><br>"
-                "Attrited Count: %{customdata[1]} of %{customdata[0]}<br>"
+                "Attrited Count: %{customdata[1]} / %{customdata[0]}<br>"
                 "Avg Monthly Income: ₹%{customdata[2]:,.2f}"
                 "<extra></extra>"
             ),
         )
     )
 
-    # Benchmark reference line (15% benchmark)
     fig.add_vline(
         x=15.0,
-        line_width=1.5,
+        line_width=1,
         line_dash="dash",
         line_color=COLOR_ROSE,
-        annotation_text="Critical Threshold (15%)",
-        annotation_position="top right",
-        annotation_font=dict(color=COLOR_ROSE, size=10),
+        annotation_text="Threshold (15%)",
+        annotation_position="bottom right",  # Moved to bottom to prevent label collisions
+        annotation_font=dict(color=COLOR_ROSE, size=9),
     )
 
-    fig.update_xaxes(title="Attrition Rate (%)", range=[0, max(df_sorted["attrition_rate_pct"].max() * 1.25, 25)])
+    max_val = float(df_sorted["attrition_rate_pct"].max()) if not df_sorted.empty else 0.0
+    x_max = max(max_val * 1.35, 25.0)
+
+    fig.update_xaxes(title="Attrition Rate (%)", range=[0, x_max])
     fig.update_yaxes(title="")
-    return _apply_dark_layout(fig, f"Flight Risk & Attrition Rate by {group_by}", height=max(360, len(df_sorted) * 34))
+    return _apply_saas_layout(fig, f"Attrition Rate by {group_by}", height=max(320, len(df_sorted) * 36))
 
 
 def create_attrition_salary_scatter(data: List[Dict[str, Any]]) -> go.Figure:
-    """
-    Scatter plot: Monthly Income vs Attrition Rate to uncover flight-risk compensation traps.
-    """
     df = pd.DataFrame(data)
     fig = go.Figure()
 
-    if df.empty:
-        return _apply_dark_layout(fig, "No Compensation Data")
+    if df.empty or "avg_monthly_income" not in df.columns:
+        return _apply_saas_layout(fig, "No Compensation Records")
+
+    df["avg_monthly_income"] = df["avg_monthly_income"].apply(_parse_numeric)
+    df["attrition_rate_pct"] = df["attrition_rate_pct"].apply(_parse_numeric)
+    df["headcount"] = df["headcount"].apply(_parse_numeric)
 
     fig.add_trace(
         go.Scatter(
@@ -282,43 +282,45 @@ def create_attrition_salary_scatter(data: List[Dict[str, Any]]) -> go.Figure:
             mode="markers+text",
             text=df["grp"],
             textposition="top center",
+            cliponaxis=False,  # Prevents labels from getting clipped
             textfont=dict(size=10, color=COLOR_TEXT),
             marker=dict(
-                size=df["headcount"].apply(lambda h: max(14, min(40, h // 15))),
+                size=df["headcount"].apply(lambda h: max(14, min(36, int(h) // 18))),
                 color=df["attrition_rate_pct"],
                 colorscale=[[0, COLOR_EMERALD], [0.5, COLOR_AMBER], [1.0, COLOR_ROSE]],
                 showscale=False,
-                line=dict(color="#F8FAFC", width=1.5),
+                line=dict(color="#1F2937", width=1),
             ),
             hovertemplate=(
                 "<b>%{text}</b><br>"
-                "Avg Monthly Income: ₹%{x:,.2f}<br>"
-                "Attrition Rate: %{y:.2f}%<br>"
+                "Avg Income: ₹%{x:,.2f}<br>"
+                "Attrition: %{y:.2f}%"
                 "<extra></extra>"
             ),
         )
     )
 
-    fig.update_xaxes(title="Average Monthly Income (₹)", showgrid=True)
-    fig.update_yaxes(title="Attrition Rate (%)", showgrid=True)
-    return _apply_dark_layout(fig, "Compensation vs Flight Risk Matrix (Bubble Size = Headcount)", height=400)
+    x_min = df["avg_monthly_income"].min() * 0.90
+    x_max = df["avg_monthly_income"].max() * 1.10
+    fig.update_xaxes(title="Average Monthly Income (₹)", range=[x_min, x_max])
+    fig.update_yaxes(title="Attrition Rate (%)")
+    return _apply_saas_layout(fig, "Compensation vs Flight Risk Matrix", height=360)
 
 
 def create_bottlenecks_matrix_chart(data: List[Dict[str, Any]]) -> go.Figure:
-    """
-    Quadrant plot of Work-Life Balance vs Job Satisfaction per Project.
-    Rank 1 identifies the highest bottleneck/burnout risk.
-    """
     df = pd.DataFrame(data)
     fig = go.Figure()
 
     if df.empty:
-        return _apply_dark_layout(fig, "No Project Risk Data")
+        return _apply_saas_layout(fig, "No Project Records")
 
-    # Risk color mapping
+    df["avg_work_life_balance"] = df["avg_work_life_balance"].apply(_parse_numeric)
+    df["avg_job_satisfaction"] = df["avg_job_satisfaction"].apply(_parse_numeric)
+    df["employees_reviewed"] = df["employees_reviewed"].apply(_parse_numeric)
+
     risk_colors = [
         COLOR_ROSE if rank == 1 else COLOR_AMBER if rank == 2 else COLOR_PRIMARY if rank == 3 else COLOR_EMERALD
-        for rank in df["risk_rank"]
+        for rank in df.get("risk_rank", [1]*len(df))
     ]
 
     fig.add_trace(
@@ -328,86 +330,81 @@ def create_bottlenecks_matrix_chart(data: List[Dict[str, Any]]) -> go.Figure:
             mode="markers+text",
             text=df["project_name"],
             textposition="top center",
-            textfont=dict(size=11, color=COLOR_TEXT),
+            cliponaxis=False,
+            textfont=dict(size=10, color=COLOR_TEXT),
             marker=dict(
-                size=df["employees_reviewed"].apply(lambda e: max(16, min(45, e * 1.2))),
+                size=df["employees_reviewed"].apply(lambda e: max(14, min(38, int(e * 1.1)))),
                 color=risk_colors,
-                line=dict(color="#FFFFFF", width=1.5),
+                line=dict(color="#1F2937", width=1),
             ),
-            customdata=df[["risk_rank", "status", "review_count", "employees_reviewed", "avg_performance"]],
             hovertemplate=(
                 "<b>%{text}</b><br>"
-                "Risk Rank: <b>#%{customdata[0]}</b><br>"
-                "Project Status: %{customdata[1]}<br>"
-                "Work-Life Balance: <b>%{x:.2f} / 4.0</b><br>"
-                "Job Satisfaction: <b>%{y:.2f} / 4.0</b><br>"
-                "Team Evaluated: %{customdata[3]} members (%{customdata[2]} reviews)<br>"
-                "Avg Performance: %{customdata[4]:.2f}"
+                "Work-Life Balance: <b>%{x:.2f}</b><br>"
+                "Job Satisfaction: <b>%{y:.2f}</b>"
                 "<extra></extra>"
             ),
         )
     )
 
-    # Reference crosshairs at 2.5 benchmark
-    fig.add_vline(x=2.5, line_width=1, line_dash="dash", line_color="rgba(255,255,255,0.2)")
-    fig.add_hline(y=2.5, line_width=1, line_dash="dash", line_color="rgba(255,255,255,0.2)")
+    fig.add_vline(x=2.5, line_width=1, line_dash="dash", line_color=COLOR_GRID)
+    fig.add_hline(y=2.5, line_width=1, line_dash="dash", line_color=COLOR_GRID)
 
-    fig.update_xaxes(title="Average Work-Life Balance Score", range=[1.2, 4.0])
-    fig.update_yaxes(title="Average Job Satisfaction Score", range=[1.2, 4.0])
-    return _apply_dark_layout(fig, "Project Stress & Burnout Bottlenecks (Bubble Size = Staff Count)", height=420)
+    fig.update_xaxes(title="Work-Life Balance (1.0 - 4.0)", range=[1.2, 4.0])
+    fig.update_yaxes(title="Job Satisfaction (1.0 - 4.0)", range=[1.2, 4.0])
+    return _apply_saas_layout(fig, "Project Work-Life Balance vs Satisfaction", height=380)
 
 
 def create_scd2_timeline_chart(data: List[Dict[str, Any]]) -> go.Figure:
-    """
-    Gantt / Timeline chart visualizing the SCD Type 2 dimension versioning lifecycle.
-    """
     df = pd.DataFrame(data)
     fig = go.Figure()
 
     if df.empty:
-        return _apply_dark_layout(fig, "No Version History Available")
+        return _apply_saas_layout(fig, "No Historical Versions")
 
     df_sorted = df.sort_values(by="start_date")
     today = pd.to_datetime("today").date()
 
-    for idx, row in df_sorted.iterrows():
+    for _, row in df_sorted.iterrows():
         s_date = pd.to_datetime(row["start_date"])
-        e_date = pd.to_datetime(row["end_date"]) if row.get("end_date") else pd.to_datetime(today)
+        e_date = pd.to_datetime(row["end_date"]) if pd.notna(row.get("end_date")) and row.get("end_date") else pd.to_datetime(today)
         is_cur = bool(row.get("is_current", False))
 
-        bar_color = COLOR_EMERALD if is_cur else "#475569"
-        status_label = "ACTIVE (CURRENT)" if is_cur else "INACTIVE (HISTORICAL)"
-        income_delta = row.get("income_change", 0.0) or 0.0
+        bar_color = COLOR_EMERALD if is_cur else "#374151"
+        status_label = "Active (Current)" if is_cur else "Historical"
+        income_delta = _parse_numeric(row.get("income_change", 0.0))
+        monthly_income = _parse_numeric(row.get("monthly_income", 0.0))
+
+        # Convert duration to milliseconds for a Plotly date axis
+        duration_days = max((e_date - s_date).days, 60)
+        duration_ms = duration_days * 24 * 60 * 60 * 1000
 
         fig.add_trace(
             go.Bar(
-                x=[(e_date - s_date).days or 30],
-                y=[f"Ver #{row['employee_sk']}: {row['job_role']}"],
-                base=[s_date],
+                x=[duration_ms],
+                y=[f"SK {row['employee_sk']}: {row['job_role']}"],
+                base=[s_date.isoformat()],
                 orientation="h",
                 marker=dict(
                     color=bar_color,
-                    line=dict(color=COLOR_PRIMARY if is_cur else "rgba(255,255,255,0.2)", width=1.5),
+                    line=dict(color=COLOR_PRIMARY if is_cur else "#4B5563", width=1),
                 ),
-                text=f"{status_label} &bull; ₹{row['monthly_income']:,.0f}/mo" + (f" ({income_delta:+,.0f} delta)" if income_delta != 0 else ""),
+                text=f"{status_label} | ₹{monthly_income:,.0f}" + (f" ({income_delta:+,.0f})" if income_delta != 0 else ""),
                 textposition="inside",
-                textfont=dict(color=COLOR_TEXT, size=11),
+                textfont=dict(color=COLOR_TEXT, size=10),
                 hovertemplate=(
                     f"<b>Version SK: {row['employee_sk']}</b><br>"
-                    f"Job Role: {row['job_role']}<br>"
-                    f"Monthly Income: ₹{row['monthly_income']:,.2f}<br>"
-                    f"Start Date: {row['start_date']}<br>"
-                    f"End Date: {row.get('end_date') or 'Ongoing (Active)'}<br>"
-                    f"Status: <b>{status_label}</b><br>"
-                    f"Salary Delta (LAG): <b>₹{income_delta:+,.2f}</b>"
+                    f"Role: {row['job_role']}<br>"
+                    f"Monthly Income: ₹{monthly_income:,.2f}<br>"
+                    f"Start: {row['start_date']}<br>"
+                    f"End: {row.get('end_date') or 'Ongoing'}<br>"
+                    f"Status: {status_label}<br>"
+                    f"Delta: ₹{income_delta:+,.2f}"
                     "<extra></extra>"
                 ),
-                name=f"SK #{row['employee_sk']}",
                 showlegend=False,
             )
         )
 
-    fig.update_xaxes(title="Validity Timeline", type="date")
+    fig.update_xaxes(title="Validity Window", type="date", tickformat="%b %Y")
     fig.update_yaxes(title="")
-    return _apply_dark_layout(fig, "SCD Type 2 Dimension Lifespan (Audit & Time-Travel)", height=max(260, len(df_sorted) * 60))
-
+    return _apply_saas_layout(fig, "SCD Type 2 Version Lifecycle", height=max(220, len(df_sorted) * 55))
