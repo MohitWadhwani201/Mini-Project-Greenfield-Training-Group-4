@@ -48,14 +48,20 @@ def render_analytics_module(dal: DALClient):
         else:
             df_yoy = pd.DataFrame(yoy_data)
             latest = df_yoy.iloc[-1]
+            prior = df_yoy.iloc[-2] if len(df_yoy) > 1 else latest
+
             yoy_delta = latest.get("yoy_change")
             trend_val = f"{yoy_delta:+.3f}" if yoy_delta is not None else "0.000"
             trend_type = "positive" if (yoy_delta or 0) >= 0 else "negative"
 
+            # Dynamic deltas calculated from actual data records
+            js_delta = latest.get("avg_job_satisfaction", 0.0) - prior.get("avg_job_satisfaction", 0.0)
+            wlb_delta = latest.get("avg_work_life_balance", 0.0) - prior.get("avg_work_life_balance", 0.0)
+
             c1 = render_kpi_card("Current Avg Rating", f"{latest['avg_performance']:.2f}", trend_val, "vs prior year", trend_type)
-            c2 = render_kpi_card("Historical Reviews", f"{df_yoy['review_count'].sum():,}", "", "total records evaluated", "neutral")
-            c3 = render_kpi_card("Job Satisfaction", f"{latest.get('avg_job_satisfaction', 0.0):.2f}", "+0.11", "cohort index", "positive")
-            c4 = render_kpi_card("Work-Life Balance", f"{latest.get('avg_work_life_balance', 0.0):.2f}", "+0.13", "cohort index", "positive")
+            c2 = render_kpi_card("Historical Reviews", f"{int(df_yoy['review_count'].sum()):,}", "", "total records evaluated", "neutral")
+            c3 = render_kpi_card("Job Satisfaction", f"{latest.get('avg_job_satisfaction', 0.0):.2f}", f"{js_delta:+.2f}", "vs prior year", "positive" if js_delta >= 0 else "negative")
+            c4 = render_kpi_card("Work-Life Balance", f"{latest.get('avg_work_life_balance', 0.0):.2f}", f"{wlb_delta:+.2f}", "vs prior year", "positive" if wlb_delta >= 0 else "negative")
             st.markdown(render_kpi_grid([c1, c2, c3, c4]), unsafe_allow_html=True)
 
             fig_yoy = create_yoy_performance_chart(yoy_data)
@@ -63,7 +69,7 @@ def render_analytics_module(dal: DALClient):
 
             st.markdown("#### Historical Fact Aggregate Table")
             df_display = df_yoy.copy()
-            df_display["review_count"] = df_display["review_count"].apply(lambda v: f"{v:,}")
+            df_display["review_count"] = df_display["review_count"].apply(lambda v: f"{int(v):,}" if pd.notnull(v) else "0")
             df_display["yoy_change"] = df_display["yoy_change"].apply(
                 lambda v: f"{v:+.3f}" if pd.notnull(v) and v != 0 else "—"
             )
@@ -91,26 +97,31 @@ def render_analytics_module(dal: DALClient):
 
         ranked_data = dal.get_top_performers(department=filter_dept, top_n=sel_top_n, year=filter_year)
 
+        # Truncate to match user's slider limit cleanly
+        if ranked_data:
+            ranked_data = ranked_data[:sel_top_n]
+
         if not ranked_data:
             st.warning("No records found matching the filter criteria.")
         else:
             df_ranked = pd.DataFrame(ranked_data)
-            top3 = df_ranked[df_ranked["dept_rank"] <= 3].head(3)
+            top3 = df_ranked.head(3)
 
             if len(top3) > 0:
                 podium_cards = []
                 for _, row in top3.iterrows():
-                    r = row["dept_rank"]
+                    r = row.get("dept_rank", 1)
                     name = f"{row['first_name']} {row['last_name']}"
                     card = render_kpi_card(
                         f"Rank {r}",
-                        f"{row['avg_rating']:.2f}",
-                        f"{row['review_count']} reviews",
+                        f"{float(row['avg_rating']):.2f}",
+                        f"{int(row['review_count'])} reviews",
                         f"{name} ({row['department_name']})",
                         "neutral",
                     )
                     podium_cards.append(card)
-                # Pad to 4 or display
+                
+                # Keep grid aligned with 4 cards
                 while len(podium_cards) < 4:
                     podium_cards.append(render_kpi_card("Threshold", f"Top {sel_top_n}", "", "Active Filter", "neutral"))
                 st.markdown(render_kpi_grid(podium_cards), unsafe_allow_html=True)
@@ -120,7 +131,8 @@ def render_analytics_module(dal: DALClient):
 
             st.markdown("#### Ranked Performance Ledger")
             display_cols = ["dept_rank", "first_name", "last_name", "department_name", "avg_rating", "review_count"]
-            df_table = df_ranked[display_cols].rename(
+            available_cols = [c for c in display_cols if c in df_ranked.columns]
+            df_table = df_ranked[available_cols].rename(
                 columns={
                     "dept_rank": "Rank",
                     "first_name": "First Name",
@@ -164,10 +176,14 @@ def render_analytics_module(dal: DALClient):
         if project_bottlenecks:
             st.markdown("#### Project Health Register")
             df_proj_bn = pd.DataFrame(project_bottlenecks)
-            df_proj_bn["risk_rank"] = df_proj_bn["risk_rank"].apply(lambda r: f"Rank {r}")
-            df_proj_bn["avg_work_life_balance"] = df_proj_bn["avg_work_life_balance"].apply(lambda v: f"{v:.2f}")
-            df_proj_bn["avg_job_satisfaction"] = df_proj_bn["avg_job_satisfaction"].apply(lambda v: f"{v:.2f}")
-            df_proj_bn["avg_performance"] = df_proj_bn["avg_performance"].apply(lambda v: f"{v:.2f}")
+            if "risk_rank" in df_proj_bn.columns:
+                df_proj_bn["risk_rank"] = df_proj_bn["risk_rank"].apply(lambda r: f"Rank {r}")
+            if "avg_work_life_balance" in df_proj_bn.columns:
+                df_proj_bn["avg_work_life_balance"] = df_proj_bn["avg_work_life_balance"].apply(lambda v: f"{float(v):.2f}")
+            if "avg_job_satisfaction" in df_proj_bn.columns:
+                df_proj_bn["avg_job_satisfaction"] = df_proj_bn["avg_job_satisfaction"].apply(lambda v: f"{float(v):.2f}")
+            if "avg_performance" in df_proj_bn.columns:
+                df_proj_bn["avg_performance"] = df_proj_bn["avg_performance"].apply(lambda v: f"{float(v):.2f}")
             st.dataframe(df_proj_bn, use_container_width=True, hide_index=True)
 
     # -------------------------------------------------------------------------
@@ -181,8 +197,9 @@ def render_analytics_module(dal: DALClient):
         if not employees:
             st.warning("No employees available to inspect.")
         else:
+            # Inline formatted string without line breaks
             emp_choices = {
-                f"#{e['employee_id']} - {e['first_name']} {e['last_name']} ({e['job_role']})": e["employee_id"]
+                f"#{e['employee_id']} {e['first_name']} {e['last_name']} ({e['job_role']})": e["employee_id"]
                 for e in employees
             }
             inspect_emp = st.selectbox("Select Employee for Historical Audit", list(emp_choices.keys()))
@@ -201,9 +218,11 @@ def render_analytics_module(dal: DALClient):
                 df_hist_full["is_current"] = df_hist_full["is_current"].apply(
                     lambda v: "Active" if v == 1 or v is True else "Historical"
                 )
-                df_hist_full["monthly_income"] = df_hist_full["monthly_income"].apply(lambda v: f"₹{v:,.2f}")
+                df_hist_full["monthly_income"] = df_hist_full["monthly_income"].apply(
+                    lambda v: f"₹{float(v):,.2f}" if pd.notnull(v) else "₹0.00"
+                )
                 df_hist_full["income_change"] = df_hist_full["income_change"].apply(
-                    lambda v: f"₹{v:+,.2f}" if v and v != 0 else "—"
+                    lambda v: f"₹{float(v):+,.2f}" if pd.notnull(v) and float(v) != 0 else "—"
                 )
                 df_hist_full["end_date"] = df_hist_full["end_date"].fillna("Ongoing")
 
@@ -217,4 +236,5 @@ def render_analytics_module(dal: DALClient):
                     "end_date",
                     "is_current",
                 ]
-                st.dataframe(df_hist_full[cols], use_container_width=True, hide_index=True)
+                available_hist_cols = [c for c in cols if c in df_hist_full.columns]
+                st.dataframe(df_hist_full[available_hist_cols], use_container_width=True, hide_index=True)
