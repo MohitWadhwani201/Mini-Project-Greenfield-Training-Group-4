@@ -1,12 +1,3 @@
-"""
-Executive Dark Theme Plotly Visualizations for Enterprise HR Analytics.
-Implements:
-1. YoY Performance Trends (LAG change)
-2. Top Performers Leaderboard (DENSE_RANK)
-3. Attrition Risk & Compensation Distribution
-4. Project Bottlenecks & Flight Risk Matrix
-5. SCD-2 Historical Version Timeline
-"""
 from typing import List, Dict, Any, Optional
 import pandas as pd
 import plotly.graph_objects as go
@@ -26,7 +17,6 @@ COLOR_GRID = "rgba(255, 255, 255, 0.07)"
 
 
 def _apply_dark_layout(fig: go.Figure, title: str = "", height: int = 400) -> go.Figure:
-    """Standardize layout for dark cyber enterprise aesthetic."""
     fig.update_layout(
         title=dict(
             text=f"<b>{title}</b>" if title else "",
@@ -73,9 +63,6 @@ def _apply_dark_layout(fig: go.Figure, title: str = "", height: int = 400) -> go
     return fig
 
 
-# -----------------------------------------------------------------------------
-# 1. YoY PERFORMANCE TRENDS
-# -----------------------------------------------------------------------------
 def create_yoy_performance_chart(data: List[Dict[str, Any]]) -> go.Figure:
     """
     Renders YoY Performance Trend with LAG() delta markers and auxiliary satisfaction scores.
@@ -135,12 +122,17 @@ def create_yoy_performance_chart(data: List[Dict[str, Any]]) -> go.Figure:
                 y=df["yoy_change"].fillna(0),
                 name="YoY Delta (LAG)",
                 marker=dict(
-                    color=df["yoy_change"].apply(
-                        lambda v: "rgba(16, 185, 129, 0.45)" if v >= 0 else "rgba(244, 63, 94, 0.45)"
+                    color = df["yoy_change"].apply(
+                        lambda v: (
+                            "rgba(16, 185, 129, 0.45)"
+                            if (v is not None and pd.notna(v) and v >= 0)
+                            else "rgba(244, 63, 94, 0.45)"
+                        )
                     ),
                     line=dict(
-                        color=df["yoy_change"].apply(lambda v: COLOR_EMERALD if v >= 0 else COLOR_ROSE),
-                        width=1,
+                        color = df["yoy_change"].apply(
+                            lambda v: COLOR_EMERALD if (v is not None and v == v and v >= 0) else COLOR_ROSE
+                        ),   width=1,
                     ),
                 ),
                 yaxis="y2",
@@ -164,9 +156,6 @@ def create_yoy_performance_chart(data: List[Dict[str, Any]]) -> go.Figure:
     return _apply_dark_layout(fig, "Year-Over-Year Performance & Satisfaction Trajectory", height=430)
 
 
-# -----------------------------------------------------------------------------
-# 2. TOP PERFORMERS LEADERBOARD (DENSE_RANK)
-# -----------------------------------------------------------------------------
 def create_leaderboard_chart(data: List[Dict[str, Any]], top_n: int = 5) -> go.Figure:
     """
     Ranked horizontal bar chart for top performers grouped by department.
@@ -222,9 +211,6 @@ def create_leaderboard_chart(data: List[Dict[str, Any]], top_n: int = 5) -> go.F
     return _apply_dark_layout(fig, f"Top Performers Leaderboard (SQL DENSE_RANK)", height=max(380, len(df_sorted) * 35))
 
 
-# -----------------------------------------------------------------------------
-# 3. ATTRITION RISK & COMPENSATION
-# -----------------------------------------------------------------------------
 def create_attrition_chart(data: List[Dict[str, Any]], group_by: str = "Department") -> go.Figure:
     """
     Renders Attrition Rate (%) comparison with flight-risk threshold.
@@ -318,9 +304,6 @@ def create_attrition_salary_scatter(data: List[Dict[str, Any]]) -> go.Figure:
     return _apply_dark_layout(fig, "Compensation vs Flight Risk Matrix (Bubble Size = Headcount)", height=400)
 
 
-# -----------------------------------------------------------------------------
-# 4. PROJECT BOTTLENECKS MATRIX
-# -----------------------------------------------------------------------------
 def create_bottlenecks_matrix_chart(data: List[Dict[str, Any]]) -> go.Figure:
     """
     Quadrant plot of Work-Life Balance vs Job Satisfaction per Project.
@@ -374,9 +357,6 @@ def create_bottlenecks_matrix_chart(data: List[Dict[str, Any]]) -> go.Figure:
     return _apply_dark_layout(fig, "Project Stress & Burnout Bottlenecks (Bubble Size = Staff Count)", height=420)
 
 
-# -----------------------------------------------------------------------------
-# 5. SCD-2 TIME-TRAVEL TIMELINE
-# -----------------------------------------------------------------------------
 def create_scd2_timeline_chart(data: List[Dict[str, Any]]) -> go.Figure:
     """
     Gantt / Timeline chart visualizing the SCD Type 2 dimension versioning lifecycle.

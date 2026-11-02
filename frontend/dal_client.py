@@ -77,10 +77,6 @@ class DALClient:
             self.connection_error = str(e)
             return False
 
-    # =========================================================================
-    # IN-MEMORY SANDBOX STATE (Used when MySQL is offline or in Demo Mode)
-    # Implements full SCD Type 2 logic and Star Schema semantics!
-    # =========================================================================
     def _init_sandbox_data(self) -> None:
         today = date.today()
         self._demo_depts = [
@@ -347,9 +343,6 @@ class DALClient:
             {"review_id": 7, "employee_id": 105, "review_date": date(2023, 12, 14), "performance_rating": 4, "job_satisfaction": 4, "environment_satisfaction": 4, "work_life_balance": 3},
         ]
 
-    # =========================================================================
-    # EMPLOYEE OPERATIONS (OLTP + SCD-2)
-    # =========================================================================
     def list_departments(self) -> List[Dict[str, Any]]:
         if self.is_connected and not self.force_demo_mode:
             try:
@@ -493,9 +486,6 @@ class DALClient:
                 }
             )
 
-    # =========================================================================
-    # PROJECT & REVIEW OPERATIONS (OLTP)
-    # =========================================================================
     def create_project(self, project: Project) -> int:
         if self.is_connected and not self.force_demo_mode:
             return self._proj_mgr.create_project(project)
@@ -572,9 +562,6 @@ class DALClient:
         self._demo_reviews.append(r_dict)
         return new_rid
 
-    # =========================================================================
-    # ANALYTICS OPERATIONS (OLAP Star Schema)
-    # =========================================================================
     def get_yoy_performance(self) -> List[Dict[str, Any]]:
         """Year-over-year performance trends and LAG change."""
         if self.is_connected and not self.force_demo_mode:
@@ -770,9 +757,7 @@ class DALClient:
                 row["income_change"] = row["monthly_income"] - sorted_v[i - 1]["monthly_income"]
         return sorted_v
 
-    # =========================================================================
-    # ETL & WAREHOUSE QUALITY OPERATIONS
-    # =========================================================================
+
     def run_full_etl(self, start_year: int = 2015, end_year: Optional[int] = None) -> None:
         if self.is_connected and not self.force_demo_mode:
             self._etl_mgr.run_full_etl(start_year, end_year)

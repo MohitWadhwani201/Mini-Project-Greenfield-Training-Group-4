@@ -35,9 +35,6 @@ def render_analytics_module(dal: DALClient):
         ]
     )
 
-    # -------------------------------------------------------------------------
-    # TAB 1: YoY PERFORMANCE TRENDS
-    # -------------------------------------------------------------------------
     with tab_yoy:
         st.markdown("### 📈 Year-Over-Year Performance Trajectory")
         st.caption("Aggregates annual reviews and calculates year-over-year momentum using the SQL `LAG()` window function.")
@@ -93,9 +90,7 @@ def render_analytics_module(dal: DALClient):
             )
             st.dataframe(df_display, use_container_width=True, hide_index=True)
 
-    # -------------------------------------------------------------------------
-    # TAB 2: TOP PERFORMERS LEADERBOARD (DENSE_RANK)
-    # -------------------------------------------------------------------------
+    
     with tab_leader:
         st.markdown("### 🏆 Top Performers Leaderboard (SQL DENSE_RANK)")
         st.caption("Ranks employees by average review rating partitioned by department using SQL `DENSE_RANK() OVER (PARTITION BY department_name ORDER BY avg_rating DESC)`.")
@@ -158,9 +153,7 @@ def render_analytics_module(dal: DALClient):
             )
             st.dataframe(df_table, use_container_width=True, hide_index=True)
 
-    # -------------------------------------------------------------------------
-    # TAB 3: ATTRITION RISK & BOTTLENECKS
-    # -------------------------------------------------------------------------
+    
     with tab_risk:
         st.markdown("### ⚠️ Attrition Risk & Project Bottlenecks")
         st.caption("Surfaces flight-risk roles, compensation gaps, and projects experiencing critical work-life balance stress.")
@@ -200,9 +193,7 @@ def render_analytics_module(dal: DALClient):
             df_proj_bn["avg_performance"] = df_proj_bn["avg_performance"].apply(lambda v: f"{v:.2f} / 4.0")
             st.dataframe(df_proj_bn, use_container_width=True, hide_index=True)
 
-    # -------------------------------------------------------------------------
-    # TAB 4: SCD-2 TIME-TRAVEL INSPECTOR
-    # -------------------------------------------------------------------------
+    
     with tab_scd2_view:
         st.markdown("### 🕰️ Slowly Changing Dimension (SCD-2) Time-Travel Inspector")
         st.caption("Audit how employee roles, compensation, and career trajectories evolved over time without losing historical fidelity.")

@@ -67,6 +67,7 @@ class DatabaseConnection:
                             pool_name=f"pool_{database}"[:32], pool_size=s.pool_size,
                             host=s.host, port=s.port, user=s.user,
                             password=s.password, database=database,
+                            use_pure=True,  
                         )
                     except mysql.connector.Error as exc:
                         raise DatabaseOperationError(

@@ -58,9 +58,7 @@ def render_data_entry_module(dal: DALClient):
         ]
     )
 
-    # -------------------------------------------------------------------------
-    # TAB 1: ONBOARD NEW EMPLOYEE
-    # -------------------------------------------------------------------------
+    
     with tab_onboard:
         st.markdown("### 👤 Employee Onboarding Form")
         st.caption("Inserts employee profile into OLTP `Employees` table and initializes their first SCD Type 2 dimension version in OLAP.")
@@ -142,9 +140,7 @@ def render_data_entry_module(dal: DALClient):
             except AppError as ae:
                 st.error(f"❌ **Error:** {ae}")
 
-    # -------------------------------------------------------------------------
-    # TAB 2: UPDATE POSITION / SALARY (SCD TYPE 2 TRIGGER)
-    # -------------------------------------------------------------------------
+    
     with tab_scd2:
         st.markdown("### 🔄 Employee Promotion, Transfer & Salary Revision")
         st.markdown(get_scd2_explanation_html(), unsafe_allow_html=True)
@@ -261,9 +257,7 @@ def render_data_entry_module(dal: DALClient):
                 ]
                 st.dataframe(hist_display[cols_to_show], use_container_width=True, hide_index=True)
 
-    # -------------------------------------------------------------------------
-    # TAB 3: PROJECT CREATION & TALENT ASSIGNMENT
-    # -------------------------------------------------------------------------
+    
     with tab_project:
         st.markdown("### 🚀 Project Management & Staffing")
         col_p1, col_p2 = st.columns(2)
@@ -336,9 +330,7 @@ def render_data_entry_module(dal: DALClient):
             df_proj = pd.DataFrame(all_projects)
             st.dataframe(df_proj, use_container_width=True, hide_index=True)
 
-    # -------------------------------------------------------------------------
-    # TAB 4: SUBMIT PERFORMANCE REVIEW
-    # -------------------------------------------------------------------------
+    
     with tab_review:
         st.markdown("### ⭐ Submit Structured Performance Review")
         st.caption("Logs rigorous evaluation scores (1-4 IBM scale) into OLTP `Reviews`. Loaded into `Fact_PerformanceReviews` via ETL pipeline.")

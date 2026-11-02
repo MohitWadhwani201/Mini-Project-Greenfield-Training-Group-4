@@ -23,9 +23,6 @@ def render_etl_module(dal: DALClient):
         ]
     )
 
-    # -------------------------------------------------------------------------
-    # TAB 1: TRIGGER ETL
-    # -------------------------------------------------------------------------
     with tab_ops:
         st.markdown("### ⚡ Execute Full Warehouse ETL Pipeline")
         st.caption(
@@ -66,9 +63,7 @@ def render_etl_module(dal: DALClient):
                     except Exception as e:
                         st.error(f"❌ Unexpected Error during ETL: {e}")
 
-    # -------------------------------------------------------------------------
-    # TAB 2: DATA QUALITY CHECKS
-    # -------------------------------------------------------------------------
+    
     with tab_quality:
         st.markdown("### 🛡️ Warehouse Quality & Dimension Integrity Checks")
         st.caption("Runs automated SQL consistency validations on `Dim_Employee` and Star Schema integrity.")
@@ -122,9 +117,7 @@ def render_etl_module(dal: DALClient):
                 unsafe_allow_html=True,
             )
 
-    # -------------------------------------------------------------------------
-    # TAB 3: STAR SCHEMA ARCHITECTURE
-    # -------------------------------------------------------------------------
+
     with tab_arch:
         st.markdown("### 🏛️ Star Schema & SCD Type 2 Architecture Reference")
         st.markdown(

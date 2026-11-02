@@ -39,9 +39,6 @@ def main():
     # Initialize singleton DAL Client
     dal = DALClient.get_instance()
 
-    # -------------------------------------------------------------------------
-    # SIDEBAR: SYSTEM CONTROLS & NAVIGATION
-    # -------------------------------------------------------------------------
     with st.sidebar:
         st.markdown(
             """
@@ -99,15 +96,9 @@ def main():
             unsafe_allow_html=True,
         )
 
-    # -------------------------------------------------------------------------
-    # MAIN VIEW HEADER
-    # -------------------------------------------------------------------------
     db_mode = "Live MySQL OLTP/OLAP" if dal.is_connected and not dal.force_demo_mode else "Interactive Sandbox Mode"
     st.markdown(get_header_html(connected=(dal.is_connected and not dal.force_demo_mode), db_mode=db_mode), unsafe_allow_html=True)
 
-    # -------------------------------------------------------------------------
-    # MODULE ROUTING
-    # -------------------------------------------------------------------------
     if nav_choice == "📊 Executive Overview":
         render_overview_module(dal)
     elif nav_choice == "📝 HR Operations (OLTP Data Entry)":
