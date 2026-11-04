@@ -51,6 +51,5 @@ Thumbs.db
 .env
 __pycache__/
 *.pyc
-data/synthesized/*.csv
 data/synthesized/manifest.json
 /.venv
