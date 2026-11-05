@@ -1,4 +1,3 @@
-# Automated data-quality checks that run before any file is written.
 import logging
 
 import pandas as pd
@@ -9,7 +8,6 @@ log = logging.getLogger(__name__)
 
 
 class DataQualityValidator:
-    # Each check returns (name, passed, detail); run() returns the list of all results.
 
     def __init__(self, employees, history, projects, assignments, reviews, dim_date, min_rows=100000):
         self.emp = employees
@@ -21,7 +19,6 @@ class DataQualityValidator:
         self.min_rows = min_rows
 
     def run(self):
-        # Runs every check, logs PASS/FAIL for each and returns the results.
         checks = [
             self._volume, self._unique_ids, self._one_current_per_active, self._no_current_for_leavers,
             self._contiguous_versions, self._start_before_end, self._first_version_is_hire,

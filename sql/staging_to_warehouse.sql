@@ -1,15 +1,8 @@
--- =====================================================================
--- Module 2: moves staged data into the Part 1 tables.
---   Load_Dim_Date_From_Staging       stg_dim_date                      -> OLAP.Dim_Date
---   Load_OLTP_From_Staging           stg_* tables                      -> OLTP Departments/Employees/Projects/Assignments/Reviews
---   Backfill_Dim_Employee_History    stg_employee_history (SCD-2)      -> OLAP.Dim_Employee (all historical versions)
--- Run order is handled by scripts/warehouse_pipeline.py, followed by Part 1's ETL procedures.
--- =====================================================================
+
 USE GreenFieldMiniProject_STG;
 
 DELIMITER //
 
--- 1. Calendar rows for Dim_Date (the open-ended 9999-12-31 row is only used in staging)
 DROP PROCEDURE IF EXISTS Load_Dim_Date_From_Staging //
 CREATE PROCEDURE Load_Dim_Date_From_Staging()
 BEGIN
@@ -19,7 +12,6 @@ BEGIN
     WHERE date_key <> 99991231;
 END //
 
--- 2. Fill the OLTP tables (parents first so foreign keys are satisfied)
 DROP PROCEDURE IF EXISTS Load_OLTP_From_Staging //
 CREATE PROCEDURE Load_OLTP_From_Staging()
 BEGIN
@@ -31,7 +23,6 @@ BEGIN
     )
     ORDER BY s.department;
 
-    -- OLTP job_role receives the job TITLE (e.g. 'Senior Sales Executive') so promotions are visible in SCD-2
     INSERT INTO GreenFieldMiniProject_OLTP.Employees (
         employee_id, first_name, last_name, email, hire_date, department_id, job_role,
         monthly_income, date_of_birth, gender, marital_status, distance_from_home, education, is_active
@@ -56,10 +47,6 @@ BEGIN
     FROM GreenFieldMiniProject_STG.stg_performance_reviews;
 END //
 
--- 3. One-time backfill of ALL historical SCD-2 versions into Dim_Employee.
--- Part 1's ETL_Dim_Employee_SCD2 only sees each employee's current OLTP row, so it cannot create past versions.
--- The newest version of every employee (including employees who left) is stored as the current row
--- (end_date NULL, is_current = 1) - it holds their last known values, so the ETL finds nothing to change.
 DROP PROCEDURE IF EXISTS Backfill_Dim_Employee_History //
 CREATE PROCEDURE Backfill_Dim_Employee_History()
 BEGIN

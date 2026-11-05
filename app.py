@@ -32,9 +32,6 @@ from frontend.views_analytics import render_analytics_module
 from frontend.views_etl import render_etl_module
 
 
-# ============================================================================
-# PAGE CONFIGURATION
-# ============================================================================
 
 st.set_page_config(
     page_title="HR Analytics Warehouse",
@@ -43,14 +40,9 @@ st.set_page_config(
 )
 
 
-# ============================================================================
-# CUSTOM THEME CSS
-# ============================================================================
 
 st.markdown(DARK_THEME_CSS, unsafe_allow_html=True)
 
-# Sidebar visibility override.
-# The sidebar remains visible on every page and cannot be accidentally closed.
 
 st.markdown(
     """
@@ -131,9 +123,6 @@ st.markdown(
 )
 
 
-# ============================================================================
-# NAVIGATION FUNCTION
-# ============================================================================
 
 def navigate_to(page):
     """Navigate to the selected application page."""
@@ -141,9 +130,6 @@ def navigate_to(page):
     st.rerun()
 
 
-# ============================================================================
-# MAIN APPLICATION
-# ============================================================================
 
 def main():
 
@@ -162,9 +148,6 @@ def main():
         nav_param = "overview"
         st.query_params["nav"] = "overview"
 
-    # ========================================================================
-    # SIDEBAR NAVIGATION
-    # ========================================================================
 
     with st.sidebar:
 
@@ -303,9 +286,6 @@ def main():
             unsafe_allow_html=True,
         )
 
-    # ========================================================================
-    # TOP NAVBAR
-    # ========================================================================
 
     db_mode = (
         "Live MySQL (Connected)"
@@ -323,9 +303,6 @@ def main():
         unsafe_allow_html=True,
     )
 
-    # ========================================================================
-    # PAGE ROUTING
-    # ========================================================================
 
     if nav_param == "overview":
 
@@ -344,9 +321,6 @@ def main():
         render_etl_module(dal)
 
 
-# ============================================================================
-# EXECUTIVE OVERVIEW
-# ============================================================================
 
 def render_overview_module(dal: DALClient):
     """
@@ -402,9 +376,6 @@ def render_overview_module(dal: DALClient):
         else 3.5
     )
 
-    # ========================================================================
-    # KPI CARDS
-    # ========================================================================
 
     card1 = render_kpi_card(
         label="Active Workforce",
@@ -449,9 +420,6 @@ def render_overview_module(dal: DALClient):
         unsafe_allow_html=True,
     )
 
-    # ========================================================================
-    # DEPARTMENT DISTRIBUTION AND PROJECTS
-    # ========================================================================
 
     col_left, col_right = st.columns([1.2, 1])
 
@@ -515,9 +483,6 @@ def render_overview_module(dal: DALClient):
                 hide_index=True,
             )
 
-    # ========================================================================
-    # QUICK LINKS - CLICKABLE CARDS
-    # ========================================================================
 
     st.markdown("---")
     st.markdown("#### Quick Links")
@@ -578,9 +543,6 @@ def render_overview_module(dal: DALClient):
         )
 
 
-# ============================================================================
-# APPLICATION ENTRY POINT
-# ============================================================================
 
 if __name__ == "__main__":
     main()

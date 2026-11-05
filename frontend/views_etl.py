@@ -30,9 +30,6 @@ def render_etl_module(dal: DALClient):
         ]
     )
 
-    # ========================================================================
-    # TAB 1: PIPELINE SYNCHRONIZATION
-    # ========================================================================
 
     with tab_ops:
 
@@ -116,9 +113,6 @@ def render_etl_module(dal: DALClient):
                             f"Unexpected Error during ETL: {e}"
                         )
 
-    # ========================================================================
-    # TAB 2: DIMENSION INTEGRITY CHECKS
-    # ========================================================================
 
     with tab_quality:
 
@@ -205,9 +199,6 @@ def render_etl_module(dal: DALClient):
                 unsafe_allow_html=True,
             )
 
-    # ========================================================================
-    # TAB 3: STAR SCHEMA ARCHITECTURE
-    # ========================================================================
 
     with tab_arch:
 
@@ -220,8 +211,6 @@ def render_etl_module(dal: DALClient):
             "ETL processing into the OLAP dimensional model."
         )
 
-        # Graphviz architecture diagram
-        # ------------------------------------------------------------
 
         architecture_dot = r"""
         digraph WarehouseArchitecture {
@@ -367,9 +356,6 @@ def render_etl_module(dal: DALClient):
             use_container_width=True,
         )
 
-        # ------------------------------------------------------------
-        # SCD TYPE 2 IMPLEMENTATION SUMMARY
-        # ------------------------------------------------------------
 
         st.markdown("---")
 
