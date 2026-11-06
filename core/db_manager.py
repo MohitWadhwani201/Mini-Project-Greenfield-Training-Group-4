@@ -35,7 +35,7 @@ class DatabaseConnection:
                     cls._instance = inst
         return cls._instance
 
-    # ---- configuration -------------------------------------------------
+  
     @property
     def settings(self) -> DBSettings:
         return self._settings
@@ -54,7 +54,7 @@ class DatabaseConnection:
         with cls._instance_lock:
             cls._instance = None
 
-    # ---- pooling -------------------------------------------------------
+    
     def _get_pool(self, database: str) -> pooling.MySQLConnectionPool:
         pool = self._pools.get(database)
         if pool is None:
@@ -88,7 +88,7 @@ class DatabaseConnection:
             return DuplicateEntityError(str(exc))
         return DatabaseOperationError(str(exc))
 
-    # ---- transactions & queries ---------------------------------------
+   
     @contextmanager
     def transaction(self, database: Optional[str] = None) -> Iterator[Any]:
         """Yield a dict cursor; commit on success, rollback on any exception."""

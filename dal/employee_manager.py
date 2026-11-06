@@ -29,7 +29,6 @@ class EmployeeManager(BaseManager):
             raise WarehouseSyncError(
                 f"Change saved in OLTP but warehouse sync failed: {exc}") from exc
 
-    # ---- create / read -------------------------------------------------
     def create_employee(self, emp: Employee, sync_warehouse: bool = True) -> int:
         """Insert employee, return employee_id. DuplicateEntityError on duplicate email."""
         new_id = self._db.execute_query(
@@ -66,7 +65,6 @@ class EmployeeManager(BaseManager):
         params += [limit, offset]
         return self._fetch_all(sql, params)
 
-    # ---- updates (trigger SCD-2) --------------------------------------
     def update_employee_position(self, employee_id: int,
                                  department_id: Optional[int] = None,
                                  job_role: Optional[str] = None,
@@ -100,7 +98,6 @@ class EmployeeManager(BaseManager):
         with self._db.transaction(self.oltp) as cur:
             cur.execute("UPDATE Employees SET is_active=0 WHERE employee_id=%s", (employee_id,))
 
-    # ---- lookups -------------------------------------------------------
     def list_departments(self) -> list[dict]:
         return self._fetch_all("SELECT department_id, department_name FROM Departments "
                                "ORDER BY department_name")

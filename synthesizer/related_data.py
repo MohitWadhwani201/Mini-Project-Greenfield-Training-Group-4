@@ -1,4 +1,3 @@
-# Generates projects, project assignments and performance reviews for the synthetic employees.
 import logging
 
 import numpy as np
@@ -14,7 +13,6 @@ PROJECT_ROLES = ["Developer", "Analyst", "Team Lead", "QA Specialist", "Coordina
 
 
 class RelatedDataSynthesizer:
-    # Output columns match the Part 1 OLTP tables (Projects, Assignments, Reviews).
 
     def __init__(self, employees, reference_date, seed=42, n_projects=150):
         self.emp = employees.reset_index(drop=True)
@@ -24,7 +22,6 @@ class RelatedDataSynthesizer:
         self.n_projects = n_projects
 
     def generate_projects(self):
-        # Creates about 150 projects spread across departments.
         rng, ref = self.rng, self.ref
         depts = sorted(self.emp["department"].unique())
         share = self.emp["department"].value_counts(normalize=True).reindex(depts)
