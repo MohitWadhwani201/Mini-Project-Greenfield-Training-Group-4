@@ -449,7 +449,7 @@ def render_top_navbar(connected: bool = True, db_mode: str = "Live OLTP/OLAP") -
     <div class="top-navbar">
         <div class="top-navbar-left">
             <h1 class="brand-heading">HR Analytics Warehouse</h1>
-            <p class="brand-subheading">Phase 4 & 5 Unified Platform</p>
+            <p class="brand-subheading">Unified Platform</p>
         </div>
         <div class="badge-group">
             <span class="badge-pill">
@@ -499,12 +499,5 @@ def render_kpi_grid(cards_html: list[str]) -> str:
 def render_scd2_callout() -> str:
     """Clean callout for SCD Type 2 logic."""
     return """
-    <div class="callout-box">
-        <div class="callout-title">SCD Type 2 Dimension Versioning</div>
-        <p class="callout-desc">
-            Modifications to <strong>Job Role</strong> or <strong>Monthly Income</strong> execute <code>ETL_Dim_Employee_SCD2</code>. 
-            The prior active record is terminated (<code>is_current = FALSE</code>, <code>end_date = yesterday</code>), 
-            and a new active record (<code>is_current = TRUE</code>, <code>start_date = today</code>) is inserted to preserve historical audit continuity.
-        </p>
-    </div>
+    
     """
