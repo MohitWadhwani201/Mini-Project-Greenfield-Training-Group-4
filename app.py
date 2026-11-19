@@ -22,7 +22,7 @@ from frontend.styles import (
     SVG_DASHBOARD,
     SVG_OPERATIONS,
     SVG_ANALYTICS,
-    SVG_WAREHOUSE,
+    # SVG_WAREHOUSE,
     render_top_navbar,
     render_kpi_card,
     render_kpi_grid,
@@ -33,11 +33,11 @@ from frontend.views_etl import render_etl_module
 
 
 
-st.set_page_config(
-    page_title="HR Analytics Warehouse",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+# st.set_page_config(
+#     page_title="HR Analytics Warehouse",
+#     layout="wide",
+#     initial_sidebar_state="expanded",
+# )
 
 
 
@@ -141,7 +141,6 @@ def main():
         "overview",
         "operations",
         "analytics",
-        "warehouse",
     ]
 
     if nav_param not in valid_pages:
@@ -157,12 +156,7 @@ def main():
             <div class="sidebar-brand">
                 <div class="brand-badge">HR</div>
                 <div>
-                    <div class="brand-text-title">
-                        Enterprise Warehouse
-                    </div>
-                    <div class="brand-text-sub">
-                        Phases 4 & 5
-                    </div>
+                    <div class="brand-text-title">Enterprise Warehouse</div>
                 </div>
             </div>
             """,
@@ -201,13 +195,13 @@ def main():
         ):
             navigate_to("analytics")
 
-        if st.button(
-            "▧  Warehouse Console",
-            key="nav_warehouse",
-            use_container_width=True,
-            type="primary" if nav_param == "warehouse" else "secondary",
-        ):
-            navigate_to("warehouse")
+        # if st.button(
+        #     "▧  Warehouse Console",
+        #     key="nav_warehouse",
+        #     use_container_width=True,
+        #     type="primary" if nav_param == "warehouse" else "secondary",
+        # ):
+        #     navigate_to("warehouse")
 
         # ====================================================================
         # ENVIRONMENT CONTROLS
@@ -316,9 +310,9 @@ def main():
 
         render_analytics_module(dal)
 
-    elif nav_param == "warehouse":
+    # elif nav_param == "warehouse":
 
-        render_etl_module(dal)
+    #     render_etl_module(dal)
 
 
 
